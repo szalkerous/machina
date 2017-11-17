@@ -88,12 +88,6 @@ namespace Machina.FFXIV
                             }
                             continue;
                         }
-
-                    if (_set == 0)
-                        _set = 1;
-                    else if (_set == 1)
-                        _set = 0;
-                    
                     
                     // Exit if not all of the message is available yet.
                     if (header.length > _bundleBuffer.Length - offset)
@@ -105,6 +99,12 @@ namespace Machina.FFXIV
                         }
                         return;
                     }
+                    
+                    if (_set == 0)
+                        _set = 1;
+                    else if (_set == 1)
+                        _set = 0;
+                    
                     int messageBufferSize;
                     byte[] message = DecompressFFXIVMessage(ref header, _bundleBuffer, offset, out messageBufferSize);
 
