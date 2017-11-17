@@ -28,8 +28,9 @@ namespace Machina.FFXIV
         private byte[] _bundleBuffer = null;
         private byte[] _decompressionBuffer = new byte[1024 * 128];
         private int _allocated = 0;
+        private int _set = 0;
 
-        public Queue<Tuple<long, byte[]>> Messages = new Queue<Tuple<long, byte[]>>(20);
+        public Queue<Tuple<long, byte[], int>> Messages = new Queue<Tuple<long, byte[], int>>(20);
 
         public DateTime LastMessageTimestamp
             { get; set; } = DateTime.MinValue;
@@ -88,6 +89,12 @@ namespace Machina.FFXIV
                             continue;
                         }
 
+                    if (_set == 0)
+                        _set = 1;
+                    else if (_set == 1)
+                        _set = 0;
+                    
+                    
                     // Exit if not all of the message is available yet.
                     if (header.length > _bundleBuffer.Length - offset)
                     {
@@ -116,8 +123,8 @@ namespace Machina.FFXIV
                                 byte[] data = new byte[message_length];
                                 Array.Copy(message, message_offset, data, 0, data.Length);
 
-                                Messages.Enqueue(new Tuple<long, byte[]>(
-                                    (long)Utility.ntohq(header.epoch), data));
+                                Messages.Enqueue(new Tuple<long, byte[], int>(
+                                    (long)Utility.ntohq(header.epoch), data, _set));
 
                                 message_offset += message_length;
                                 if (message_offset > messageBufferSize)
@@ -136,7 +143,7 @@ namespace Machina.FFXIV
             }
         }
 
-        public unsafe Tuple<long, byte[]> GetNextFFXIVMessage()
+        public unsafe Tuple<long, byte[], int> GetNextFFXIVMessage()
         {
             if (Messages.Count > 0)
                 return Messages.Dequeue();

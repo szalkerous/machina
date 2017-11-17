@@ -50,25 +50,25 @@ namespace Machina.FFXIV
         { get; set; } = "";
 
         #region Message Delegates section
-        public delegate void MessageReceivedDelegate(long epoch, byte[] message);
+        public delegate void MessageReceivedDelegate(long epoch, byte[] message, int set);
 
         /// <summary>
         /// Specifies the delegate that is called when data is received and successfully decoded/
         /// </summary>
         public MessageReceivedDelegate MessageReceived = null;
 
-        public void OnMessageReceived(long epoch, byte[] message)
+        public void OnMessageReceived(long epoch, byte[] message, int set)
         {
-            MessageReceived?.Invoke(epoch, message);
+            MessageReceived?.Invoke(epoch, message, set);
         }
         
-        public delegate void MessageSentDelegate(long epoch, byte[] message);
+        public delegate void MessageSentDelegate(long epoch, byte[] message, int set);
 
         public MessageSentDelegate MessageSent = null;
 
-        public void OnMessageSent(long epoch, byte[] message)
+        public void OnMessageSent(long epoch, byte[] message, int set)
         {
-            MessageSent?.Invoke(epoch, message);
+            MessageSent?.Invoke(epoch, message, set);
         }
 
         #endregion
@@ -118,29 +118,40 @@ namespace Machina.FFXIV
 
         public void ProcessSentMessage(string connection, byte[] data)
         {
-            Tuple<long, byte[]> message;
-            if (!_sentDecoders.ContainsKey(connection))
-                _sentDecoders.Add(connection, new FFXIVBundleDecoder());
-
-            _sentDecoders[connection].StoreData(data);
-            while ((message = _sentDecoders[connection].GetNextFFXIVMessage()) != null)
+            try
             {
-                OnMessageSent(message.Item1, message.Item2);
+                Tuple<long, byte[], int> message;
+                if (!_sentDecoders.ContainsKey(connection))
+                    _sentDecoders.Add(connection, new FFXIVBundleDecoder());
+
+                _sentDecoders[connection].StoreData(data);
+                while ((message = _sentDecoders[connection].GetNextFFXIVMessage()) != null)
+                {
+                    OnMessageSent(message.Item1, message.Item2, message.Item3);
+                }
+            }
+            catch (KeyNotFoundException)
+            {
             }
         }
 
         public void ProcessReceivedMessage(string connection, byte[] data)
         {
-            Tuple<long, byte[]> message;
-            if (!_receivedDecoders.ContainsKey(connection))
-                _receivedDecoders.Add(connection, new FFXIVBundleDecoder());
-
-            _receivedDecoders[connection].StoreData(data);
-            while ((message = _receivedDecoders[connection].GetNextFFXIVMessage()) != null)
+            try
             {
-                OnMessageReceived(message.Item1, message.Item2);
-            }
+                Tuple<long, byte[], int> message;
+                if (!_receivedDecoders.ContainsKey(connection))
+                    _receivedDecoders.Add(connection, new FFXIVBundleDecoder());
 
+                _receivedDecoders[connection].StoreData(data);
+                while ((message = _receivedDecoders[connection].GetNextFFXIVMessage()) != null)
+                {
+                    OnMessageReceived(message.Item1, message.Item2, message.Item3);
+                }
+            }
+            catch (KeyNotFoundException)
+            {
+            }
         }
     }
 }

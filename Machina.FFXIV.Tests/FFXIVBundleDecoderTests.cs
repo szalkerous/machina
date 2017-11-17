@@ -153,7 +153,7 @@ namespace Machina.FFXIV.Tests
                     sut2.FilterAndStoreData(ippayload);
                     while ((tcppayload = sut2.GetNextTCPDatagram()) != null)
                     {
-                        Tuple<long, byte[]> ffmessage;
+                        Tuple<long, byte[], int> ffmessage;
                         sut3.StoreData(tcppayload);
                         while ((ffmessage = sut3.GetNextFFXIVMessage()) != null)
                         {
