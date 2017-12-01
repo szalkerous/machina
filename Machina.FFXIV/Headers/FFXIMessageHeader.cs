@@ -54,7 +54,9 @@ namespace Machina.FFXIV
         [FieldOffset(18)]
         public ushort MessageType;
         [FieldOffset(20)]
-        public uint Unknown3;
+        public ushort Unknown3;
+        [FieldOffset(22)]
+        public ushort RouteID;
         [FieldOffset(24)]
         public uint Seconds;
         [FieldOffset(28)]
