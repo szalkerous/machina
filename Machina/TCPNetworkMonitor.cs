@@ -57,25 +57,25 @@ namespace Machina
         { get; set; } = "";
 
         #region Data Delegates section
-        public delegate void DataReceivedDelegate(string connection, byte[] data);
+        public delegate void DataReceivedDelegate(string connection, ushort remotePort, byte[] data);
 
         /// <summary>
         /// Specifies the delegate that is called when data is received and successfully decoded/
         /// </summary>
         public DataReceivedDelegate DataReceived = null;
 
-        public void OnDataReceived(string connection, byte[] data)
+        public void OnDataReceived(string connection, ushort remotePort, byte[] data)
         {
-            DataReceived?.Invoke(connection, data);
+            DataReceived?.Invoke(connection, remotePort, data);
         }
         
-        public delegate void DataSentDelegate(string connection, byte[] data);
+        public delegate void DataSentDelegate(string connection, ushort remotePort, byte[] data);
 
         public DataSentDelegate DataSent = null;
 
-        public void OnDataSent(string connection, byte[] data)
+        public void OnDataSent(string connection, ushort remotePort, byte[] data)
         {
-            DataSent?.Invoke(connection, data);
+            DataSent?.Invoke(connection, remotePort, data);
         }
         
         #endregion
@@ -298,7 +298,7 @@ namespace Machina
                     connection.TCPDecoder_Send.FilterAndStoreData(tcpbuffer);
                     while ((payloadBuffer = connection.TCPDecoder_Send.GetNextTCPDatagram()) != null)
                     {
-                        OnDataSent(connection.ID, payloadBuffer);
+                        OnDataSent(connection.ID, connection.RemotePort, payloadBuffer);
                     }
                 }
 
@@ -308,7 +308,7 @@ namespace Machina
                     connection.TCPDecoder_Receive.FilterAndStoreData(tcpbuffer);
                     while ((payloadBuffer = connection.TCPDecoder_Receive.GetNextTCPDatagram()) != null)
                     {
-                        OnDataReceived(connection.ID, payloadBuffer);
+                        OnDataReceived(connection.ID, connection.RemotePort, payloadBuffer);
                     }
                 }
             }
