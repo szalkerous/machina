@@ -30,6 +30,11 @@ namespace Machina.FFXIV
     /// </summary>
     public class FFXIVNetworkMonitor
     {
+        public enum ConnectionType
+        {
+            Game,
+            Lobby
+        }
 
         /// <summary>
         /// Specifies the type of monitor to use - Raw socket or WinPCap
@@ -50,25 +55,25 @@ namespace Machina.FFXIV
         { get; set; } = "";
 
         #region Message Delegates section
-        public delegate void MessageReceivedDelegate(long epoch, byte[] message, int set);
+        public delegate void MessageReceivedDelegate(long epoch, byte[] message, int set, ConnectionType connectionType);
 
         /// <summary>
         /// Specifies the delegate that is called when data is received and successfully decoded/
         /// </summary>
         public MessageReceivedDelegate MessageReceived = null;
 
-        public void OnMessageReceived(long epoch, byte[] message, int set)
+        public void OnMessageReceived(long epoch, byte[] message, int set, ConnectionType connectionType)
         {
-            MessageReceived?.Invoke(epoch, message, set);
+            MessageReceived?.Invoke(epoch, message, set, connectionType);
         }
         
-        public delegate void MessageSentDelegate(long epoch, byte[] message, int set);
+        public delegate void MessageSentDelegate(long epoch, byte[] message, int set, ConnectionType connectionType);
 
         public MessageSentDelegate MessageSent = null;
 
-        public void OnMessageSent(long epoch, byte[] message, int set)
+        public void OnMessageSent(long epoch, byte[] message, int set, ConnectionType connectionType)
         {
-            MessageSent?.Invoke(epoch, message, set);
+            MessageSent?.Invoke(epoch, message, set, connectionType);
         }
 
         #endregion
@@ -98,8 +103,8 @@ namespace Machina.FFXIV
             _monitor.MonitorType = MonitorType;
             _monitor.LocalIP = LocalIP;
 
-            _monitor.DataSent = (string connection, byte[] data) => ProcessSentMessage(connection, data);
-            _monitor.DataReceived = (string connection, byte[] data) => ProcessReceivedMessage(connection, data);
+            _monitor.DataSent = ProcessSentMessage;
+            _monitor.DataReceived = ProcessReceivedMessage;
 
             _monitor.Start();
         }
@@ -116,7 +121,7 @@ namespace Machina.FFXIV
             _receivedDecoders.Clear();
         }
 
-        public void ProcessSentMessage(string connection, byte[] data)
+        public void ProcessSentMessage(string connection, ushort remotePort, byte[] data)
         {
             try
             {
@@ -125,9 +130,14 @@ namespace Machina.FFXIV
                     _sentDecoders.Add(connection, new FFXIVBundleDecoder());
 
                 _sentDecoders[connection].StoreData(data);
+
+                ConnectionType connType = ConnectionType.Game;
+                if (remotePort == 54994)
+                    connType = ConnectionType.Lobby;
+                    
                 while ((message = _sentDecoders[connection].GetNextFFXIVMessage()) != null)
                 {
-                    OnMessageSent(message.Item1, message.Item2, message.Item3);
+                    OnMessageSent(message.Item1, message.Item2, message.Item3, connType);
                 }
             }
             catch (KeyNotFoundException)
@@ -135,7 +145,7 @@ namespace Machina.FFXIV
             }
         }
 
-        public void ProcessReceivedMessage(string connection, byte[] data)
+        public void ProcessReceivedMessage(string connection, ushort remotePort, byte[] data)
         {
             try
             {
@@ -144,9 +154,14 @@ namespace Machina.FFXIV
                     _receivedDecoders.Add(connection, new FFXIVBundleDecoder());
 
                 _receivedDecoders[connection].StoreData(data);
+                
+                ConnectionType connType = ConnectionType.Game;
+                if (remotePort == 54994)
+                    connType = ConnectionType.Lobby;
+                
                 while ((message = _receivedDecoders[connection].GetNextFFXIVMessage()) != null)
                 {
-                    OnMessageReceived(message.Item1, message.Item2, message.Item3);
+                    OnMessageReceived(message.Item1, message.Item2, message.Item3, connType);
                 }
             }
             catch (KeyNotFoundException)
