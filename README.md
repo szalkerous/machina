@@ -1,3 +1,7 @@
+NOTICE: ALL CREDIT FOR THIS LIBRARY SHOULD BE DIRECTED TO THE ORIGINAL AUTHOR, https://github.com/ravahn AND THE PARENT FORK AUTHOR, https://github.com/goaaats
+
+THIS VERSION CONTAINS ADDITIONAL QUALITY OF LIFE ENHANCEMENTS I HAVE FOUND USEFUL IN MY OWN PROJECTS. FEEL FREE TO COPY OR FORK AS YOU DESIRE; THE ORIGINAL AUTHOR'S LICENSE STILL APPLIES.
+
 # Machina
 
 Machina is a library that allows developers to read network data from the windows networking subsystem and reassemble it into usable information.
